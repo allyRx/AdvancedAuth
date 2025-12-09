@@ -18,6 +18,9 @@ export class User {
   @Column({ default: 'local' }) 
   provider: string;
 
+  @Column({ default: 'user' }) 
+  role: string; // 'user' | 'admin'
+
   @Column({ nullable: true })
   googleId?: string; 
   @CreateDateColumn()

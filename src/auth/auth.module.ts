@@ -8,6 +8,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { RedisModule } from 'src/redis/redis.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { RolesGuard } from './guards/roles.guard';
 
 @Module({
   imports: [
@@ -27,7 +28,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
   ],
   providers: [
     AuthService,
-    JwtStrategy
+    JwtStrategy,
+    RolesGuard
 ],
   controllers: [AuthController]
 })

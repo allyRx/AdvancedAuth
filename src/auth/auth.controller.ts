@@ -15,9 +15,10 @@ import { CreateUserDto } from '../users/dto/create-user.dto';
 import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger'; 
 import { LoginDto } from 'src/users/dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { Public } from './Utils/publicRoute';
-import { JwtAuthGuard } from './Utils/auth.guard';
+import { Public } from './decorators/publicRoute.decorators';
+import { JwtAuthGuard } from './decorators/auth.guard';
 import { Request} from 'express';
+import { Roles } from './decorators/roles.decorator';
 
 
 @ApiTags('Auth') 
@@ -60,6 +61,7 @@ async logout(@Body('refresh_token') refreshToken: string) {
 }
 
 @UseGuards(JwtAuthGuard)
+@Roles('admin')
 @Get('profile')
 async getProfile(@Req() req: any) {
   // req.user est fourni par JwtStrategy.validate()
