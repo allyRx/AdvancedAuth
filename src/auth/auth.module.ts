@@ -8,6 +8,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { RedisService } from 'src/redis/redis.service';
 import { RedisModule } from 'src/redis/redis.module';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from './Utils/auth.guard';
 
 @Module({
   imports: [
@@ -25,7 +27,10 @@ import { RedisModule } from 'src/redis/redis.module';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService],
+  providers: [AuthService, {
+    provide: APP_GUARD,
+    useClass: AuthGuard
+  }],
   controllers: [AuthController]
 })
 export class AuthModule {}

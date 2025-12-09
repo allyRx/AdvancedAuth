@@ -12,6 +12,7 @@ import { CreateUserDto } from '../users/dto/create-user.dto';
 import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger'; 
 import { LoginDto } from 'src/users/dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { Public } from './Utils/publicRoute';
 
 @ApiTags('Auth') 
 @Controller('auth')
@@ -19,6 +20,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('signup')
+  @Public()
   @HttpCode(HttpStatus.CREATED) // renvoie 201 au lieu de 200
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 201, description: 'Utilisateur créé avec succès.' })
@@ -29,6 +31,7 @@ export class AuthController {
 
 
   @Post('login')
+  @Public()
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto) {
     const user = await this.authService.validateUser(dto.email, dto.password);
@@ -43,12 +46,11 @@ export class AuthController {
 async refresh(@Body() dto: RefreshTokenDto) {
   return this.authService.refresh(dto.refresh_token);
 }
-  // AuthController
-// @Post('logout')
-// @UseGuards(JwtAuthGuard) // 👈 à créer à l’étape suivante
-// async logout(@Req() req) {
-//   await this.authService.logout(req.user.sub);
-//   return { message: 'Déconnecté avec succès.' };
-// }
+
+@Post('logout')
+async logout(@Body('refresh_token') refreshToken: string) {
+  await this.authService.logout(refreshToken);
+  return { message: 'Déconnecté.' };
+}
 
 }
