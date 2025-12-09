@@ -4,6 +4,7 @@ import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 
 
+
 @Injectable()
 export class UsersService {
     constructor(
@@ -30,5 +31,9 @@ export class UsersService {
         return await this.userRepository.findOne({where:{id}})
     }
 
+    
+    findAll(){
+        return this.userRepository.find();
+    }
 
 }

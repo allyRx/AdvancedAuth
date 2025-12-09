@@ -6,6 +6,9 @@ import {
   HttpStatus,
   HttpCode,
   UnauthorizedException,
+  Get,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
@@ -13,6 +16,9 @@ import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LoginDto } from 'src/users/dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { Public } from './Utils/publicRoute';
+import { JwtAuthGuard } from './Utils/auth.guard';
+import { Request} from 'express';
+
 
 @ApiTags('Auth') 
 @Controller('auth')
@@ -53,4 +59,10 @@ async logout(@Body('refresh_token') refreshToken: string) {
   return { message: 'Déconnecté.' };
 }
 
+@UseGuards(JwtAuthGuard)
+@Get('profile')
+async getProfile(@Req() req: any) {
+  // req.user est fourni par JwtStrategy.validate()
+  return req.user;
+}
 }
