@@ -1,4 +1,6 @@
 // src/users/entities/user.entity.ts
+import { ApiProperty } from '@nestjs/swagger';
+import { Role } from 'src/auth/enum/role.enum';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('users') // nom de la table en base de données
@@ -18,8 +20,9 @@ export class User {
   @Column({ default: 'local' }) 
   provider: string;
 
-  @Column({ default: 'user' }) 
-  role: string; // 'user' | 'admin'
+  @Column({ default: 'user' ,enum: Role}) 
+  @ApiProperty({ enum: ['Admin', 'Moderator', 'User']})
+  role: Role;
 
   @Column({ nullable: true })
   googleId?: string; 

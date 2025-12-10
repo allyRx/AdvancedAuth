@@ -73,9 +73,6 @@ export class AuthService {
 
 
 
-
-
-
     /**
      * Inscription nouvelle utilisateur
      */
@@ -111,15 +108,15 @@ export class AuthService {
 }
 
 async refresh(refreshToken: string) {
-    console.log("tpken recues: ", refreshToken)
+    
     
     // 1. Hash le token reçu
     const tokenHash = hashToken(refreshToken);
 
-    console.log("token hasher ",tokenHash)
+   
     // 2. Récupère userId depuis Redis
     const userId = await this.redisService.get(`refresh:${tokenHash}`);
-    console.log("Id user",userId)
+   
     if (!userId) {
         throw new UnauthorizedException('Refresh token invalide ou expiré.');
     }
@@ -153,7 +150,7 @@ async refresh(refreshToken: string) {
         refresh_token: newRefreshToken, // le client doit l'utiliser pour le prochain refresh
     };
 }
-    // AuthService
+    
     async logout(userId: string) {
         await this.redisService.del(`user:${userId}:refresh`);
     }

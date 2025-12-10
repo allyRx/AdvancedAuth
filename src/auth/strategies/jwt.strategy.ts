@@ -18,6 +18,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private configService: ConfigService,
     private usersService: UsersService,
   ) {
+    
     super({
       // 1. Où chercher le token ?
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -39,14 +40,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * @param payload Le contenu décodé du JWT (sub, email, etc.)
    * @returns L'utilisateur complet (sans mot de passe)
    */
+
   async validate(req: Request, payload: { sub: string; email: string }) {
     const user = await this.usersService.findById(payload.sub);
-    console.log(user)
+    
     if (!user) {
       throw new UnauthorizedException('Utilisateur introuvable.');
     }
-
-    
     return user;
   }
 }
