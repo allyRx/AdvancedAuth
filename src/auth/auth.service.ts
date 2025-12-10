@@ -95,7 +95,8 @@ export class AuthService {
         // generate opt code
         const code = this.generateEmailVerificationCode();
 
-        const ttl = 600
+        const ttl = this.config.get("REDIS_TTL_EMAIL_VERIFIED")
+       
         // 3. Stocke les données dans Redis
         await this.redisService.set(
         `signup:${email}`,
