@@ -20,6 +20,7 @@ import { JwtAuthGuard } from './decorators/auth.guard';
 import { Roles } from './decorators/roles.decorator';
 import { Role } from './enum/role.enum';
 import { RolesGuard } from './guards/roles.guard';
+import { VerifyEmailDto } from './dto/VerifyEmail.dto';
 
 
 @ApiTags('Auth') 
@@ -69,4 +70,10 @@ export class AuthController {
     // req.user est fourni par JwtStrategy.validate()
      return req.user;
     }       
+
+    @Post('verify-email')
+  @HttpCode(HttpStatus.CREATED)
+  async verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.authService.verifyEmail(dto.email, dto.code);
+  }
 }

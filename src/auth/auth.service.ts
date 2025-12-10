@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import  * as crypto from 'crypto'
 import { RedisService } from 'src/redis/redis.service';
 import { hashToken } from './hashage/hash.utils';
+import { EmailService } from './email/email.service';
 
 
 
@@ -17,7 +18,8 @@ export class AuthService {
         private userService: UsersService,
         private jwtService: JwtService,
         private config: ConfigService,
-        private readonly redisService: RedisService
+        private readonly redisService: RedisService,
+        private emailservice: EmailService
     ){}
 
     /**
@@ -77,7 +79,7 @@ export class AuthService {
      * Inscription nouvelle utilisateur
      */
 
-    async signup(createuserDto: CreateUserDto): Promise<{user: Omit<User, 'password'>}>{
+    async signup(createuserDto: CreateUserDto){
         const {email , password } = createuserDto;
 
         //Verify if email already exists
@@ -90,12 +92,26 @@ export class AuthService {
         //hashe password
         const hashPassword = await bcrypt.hash(password, 12) 
 
+        // generate opt code
+        const code = this.generateEmailVerificationCode();
+
+        const ttl = 600
+        // 3. Stocke les données dans Redis
+        await this.redisService.set(
+        `signup:${email}`,
+        JSON.stringify({ email, hashPassword }),
+        ttl
+        );
+         await this.redisService.set(`email-verify:${email}`, code, ttl);
+      
+         //Envoie l'email
+         await this.emailservice.sendVerificationCode(email , code)
 
         //create user 
-        const newUser = await this.userService.createUser({
+        const newUser = {
             email,
             password: hashPassword
-        })
+        }
 
         const {password:_ , ...safeUser} = newUser
 
@@ -145,6 +161,7 @@ async refresh(refreshToken: string) {
         }
     );
 
+
     return {
         access_token,
         refresh_token: newRefreshToken, // le client doit l'utiliser pour le prochain refresh
@@ -154,5 +171,59 @@ async refresh(refreshToken: string) {
     async logout(userId: string) {
         await this.redisService.del(`user:${userId}:refresh`);
     }
+
+    private generateEmailVerificationCode(): string{
+        const buffer = crypto.randomBytes(3);
+        const code = buffer.readUIntBE(0, 3) % 1000000;
+        return code.toString().padStart(6, '0');
+    } 
+
+
+
+  // src/auth/auth.service.ts
+async verifyEmail(email: string, code: string): Promise<{ user: Omit<User, 'password'> }> {
+  // 1. Vérifie le code OTP
+  const storedCode = await this.redisService.get(`email-verify:${email}`);
+  if (!storedCode || storedCode !== code) {
+    throw new BadRequestException('Code de vérification invalide ou expiré.');
+  }
+
+  // 2. Vérifie si l’utilisateur existe déjà (idempotence)
+  const existingUser = await this.userService.findUserByEMail(email);
+  if (existingUser) {
+    // Si déjà vérifié → retourne l’utilisateur
+    if (existingUser.isEmailVerified) {
+      const { password: _, ...safeUser } = existingUser;
+      return { user: safeUser };
+    }
+    // Si non vérifié → on pourrait relancer la vérification, mais ici on lève une erreur propre
+    throw new BadRequestException('Un compte existe déjà avec cet email, mais n’est pas encore vérifié.');
+  }
+
+  // 3. Récupère les données d’inscription
+  const signupDataStr = await this.redisService.get(`signup:${email}`);
+  if (!signupDataStr) {
+    throw new BadRequestException('Données d’inscription expirées. Veuillez vous réinscrire.');
+  }
+
+  const { hashedPassword } = JSON.parse(signupDataStr);
+
+  // 4. Crée l’utilisateur
+  const user = await this.userService.createUser({
+    email,
+    password: hashedPassword,
+    provider: 'local',
+    isEmailVerified: true,
+  });
+
+  // 5. Nettoie Redis
+  await this.redisService.del(`email-verify:${email}`);
+  await this.redisService.del(`signup:${email}`);
+
+  const { password: _, ...safeuser } = user;
+  return { user: safeuser };
 }
 
+
+
+}

@@ -10,6 +10,8 @@ import { RedisModule } from 'src/redis/redis.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { APP_GUARD } from '@nestjs/core';
+import { EmailService } from './email/email.service';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -26,11 +28,13 @@ import { APP_GUARD } from '@nestjs/core';
       }),
       inject: [ConfigService],
     }),
+    EmailModule,
   ],
   providers: [
     AuthService,
     JwtStrategy,
-    RolesGuard
+    RolesGuard,
+    EmailService
 ],
   controllers: [AuthController]
 })
